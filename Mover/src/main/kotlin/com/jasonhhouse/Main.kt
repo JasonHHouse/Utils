@@ -28,18 +28,51 @@ fun main(args: Array<String>) {
 
 class Main {
 
-    @Parameter(names = arrayOf("--parents", "-p"))
+    @Parameter(names = ["--parents", "-p"])
     internal var parents: List<String>? = null
 
-    val extensionTypes = HashSet<String>()
+    private val deleteExtensionTypes = HashSet<String>()
 
+    private val videoExtensionTypes = HashSet<String>()
 
     fun prep() {
-        extensionTypes.add("nfo")
-        extensionTypes.add("txt")
-        extensionTypes.add("srt")
-        extensionTypes.add("jpg")
-        extensionTypes.add("exe")
+        deleteExtensionTypes.add("nfo")
+        deleteExtensionTypes.add("txt")
+        deleteExtensionTypes.add("srt")
+        deleteExtensionTypes.add("jpg")
+        deleteExtensionTypes.add("exe")
+
+        videoExtensionTypes.add("mkv")
+        videoExtensionTypes.add("avi")
+        videoExtensionTypes.add("mp4")
+        videoExtensionTypes.add("mov")
+    }
+
+    private fun findMovie(child: File ) :Boolean {
+        child.listFiles()!!.forEach { file ->
+            val extension = FilenameUtils.getExtension(file.absolutePath)
+            if(videoExtensionTypes.contains(extension)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun moveMovieAndDeleteFolder(child : File, parent : String) {
+        child.listFiles()!!.forEach { file ->
+
+            if (!file.isDirectory) {
+                if(deleteExtensionTypes.contains(FilenameUtils.getExtension(file.absolutePath))) {
+                    Files.delete(file.toPath())
+                } else {
+                    val newPath = Paths.get(parent + File.separator + child.name + "." + FilenameUtils.getExtension(file.absolutePath))
+                    Files.move(file.toPath(), newPath, StandardCopyOption.REPLACE_EXISTING)
+                }
+            } else {
+                //Delete sub folders
+                FileUtils.deleteDirectory(file)
+            }
+        }
     }
 
     fun run() {
@@ -49,20 +82,14 @@ class Main {
             if (children != null) {
                 for (child in children) {
                     if (child.isDirectory) {
-                        child.listFiles()!!.forEach { file ->
 
-                            if (!file.isDirectory) {
-                                if(extensionTypes.contains(FilenameUtils.getExtension(file.absolutePath))) {
-                                    Files.delete(file.toPath())
-                                } else {
-                                    val newPath = Paths.get(parent + File.separator + child.name + "." + FilenameUtils.getExtension(file.absolutePath))
-                                    Files.move(file.toPath(), newPath, StandardCopyOption.REPLACE_EXISTING)
-                                }
-                            } else {
-                                //Delete sub folders
-                                FileUtils.deleteDirectory(file)
-                            }
+                        if(!findMovie(child)) {
+                            println("No movie found in " + child.absolutePath + ". Skipping folder.")
+                            //Skip folders without a movie inside
+                            continue
                         }
+
+                        moveMovieAndDeleteFolder(child, parent)
 
                         //Delete the folder
                         if(child.listFiles().isEmpty()) {

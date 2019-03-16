@@ -10,7 +10,7 @@
 
     <parent>
         <groupId>com.jasonhhouse</groupId>
-        <artifactId>Storage</artifactId>
+        <artifactId>Utils</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -59,7 +59,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>com.com.jasonhhouse.Main</mainClass>
+                                    <mainClass>com.Main</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
